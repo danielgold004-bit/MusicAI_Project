@@ -1,0 +1,774 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>AI Music Studio</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet" />
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #0e0c14;
+    --surface: #16131f;
+    --surface2: #1e1a2e;
+    --border: rgba(255,255,255,0.08);
+    --border-active: rgba(139,92,246,0.5);
+    --accent: #8b5cf6;
+    --accent2: #10b981;
+    --accent3: #f59e0b;
+    --text: #f1f0f5;
+    --muted: #9590a8;
+    --danger: #f87171;
+    --radius: 12px;
+    --radius-sm: 8px;
+    --font: 'Space Grotesk', sans-serif;
+    --mono: 'Space Mono', monospace;
+  }
+
+  body {
+    font-family: var(--font);
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    line-height: 1.6;
+  }
+
+  /* ── Header ── */
+  header {
+    padding: 2rem 2rem 0;
+    max-width: 860px;
+    margin: 0 auto;
+  }
+  .logo-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 0.4rem;
+  }
+  .logo-icon {
+    width: 40px; height: 40px;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 20px;
+  }
+  .logo-text {
+    font-size: 1.35rem;
+    font-weight: 600;
+    letter-spacing: -0.02em;
+  }
+  .logo-sub {
+    font-size: 0.82rem;
+    color: var(--muted);
+    margin-bottom: 2rem;
+  }
+
+  /* ── Tabs ── */
+  .tabs {
+    display: flex;
+    gap: 4px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 4px;
+    max-width: 860px;
+    margin: 0 auto 1.5rem;
+  }
+  .tab-btn {
+    flex: 1;
+    padding: 0.6rem 1rem;
+    background: transparent;
+    border: none;
+    border-radius: var(--radius-sm);
+    color: var(--muted);
+    font-family: var(--font);
+    font-size: 0.88rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.18s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+    white-space: nowrap;
+  }
+  .tab-btn:hover { color: var(--text); background: var(--surface2); }
+  .tab-btn.active {
+    background: var(--accent);
+    color: #fff;
+  }
+  .tab-btn .tab-icon { font-size: 1rem; }
+
+  /* ── Main layout ── */
+  main {
+    max-width: 860px;
+    margin: 0 auto;
+    padding: 0 1.5rem 4rem;
+  }
+  .section { display: none; }
+  .section.active { display: block; }
+
+  /* ── Card ── */
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 1.5rem;
+    margin-bottom: 1.25rem;
+  }
+  .card-title {
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.09em;
+    color: var(--muted);
+    margin-bottom: 1rem;
+  }
+
+  /* ── Form grid ── */
+  .form-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+  }
+  .form-grid.three { grid-template-columns: 1fr 1fr 1fr; }
+  .form-group { display: flex; flex-direction: column; gap: 6px; }
+  .form-group.full { grid-column: 1 / -1; }
+  label {
+    font-size: 0.8rem;
+    font-weight: 500;
+    color: var(--muted);
+    letter-spacing: 0.01em;
+  }
+  input, select, textarea {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    color: var(--text);
+    font-family: var(--font);
+    font-size: 0.9rem;
+    padding: 0.6rem 0.85rem;
+    transition: border-color 0.15s;
+    width: 100%;
+  }
+  input:focus, select:focus, textarea:focus {
+    outline: none;
+    border-color: var(--accent);
+  }
+  select option { background: #1e1a2e; }
+  textarea { resize: vertical; min-height: 80px; }
+
+  /* File upload zone */
+  .upload-zone {
+    border: 2px dashed var(--border);
+    border-radius: var(--radius);
+    padding: 2rem;
+    text-align: center;
+    cursor: pointer;
+    transition: border-color 0.18s, background 0.18s;
+    position: relative;
+  }
+  .upload-zone:hover, .upload-zone.drag-over {
+    border-color: var(--accent);
+    background: rgba(139,92,246,0.06);
+  }
+  .upload-zone input[type="file"] {
+    position: absolute; inset: 0; opacity: 0; cursor: pointer;
+    width: 100%; height: 100%;
+  }
+  .upload-icon { font-size: 2rem; margin-bottom: 0.5rem; }
+  .upload-label { font-size: 0.9rem; color: var(--muted); }
+  .upload-label strong { color: var(--accent); }
+  .file-name {
+    margin-top: 0.5rem;
+    font-size: 0.82rem;
+    color: var(--accent2);
+    font-family: var(--mono);
+  }
+
+  /* ── Generate button ── */
+  .gen-btn {
+    width: 100%;
+    padding: 0.85rem;
+    background: var(--accent);
+    border: none;
+    border-radius: var(--radius-sm);
+    color: #fff;
+    font-family: var(--font);
+    font-size: 0.95rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: opacity 0.15s, transform 0.1s;
+    margin-top: 0.5rem;
+    letter-spacing: 0.01em;
+  }
+  .gen-btn:hover { opacity: 0.88; }
+  .gen-btn:active { transform: scale(0.985); }
+  .gen-btn:disabled { opacity: 0.45; cursor: not-allowed; }
+  .gen-btn.beat-btn { background: var(--accent3); }
+  .gen-btn.upload-btn { background: var(--accent2); }
+
+  /* ── Output area ── */
+  .output-box {
+    display: none;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+  }
+  .output-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.75rem 1rem;
+    border-bottom: 1px solid var(--border);
+  }
+  .output-label {
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--muted);
+  }
+  .copy-btn {
+    background: transparent;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    color: var(--muted);
+    font-family: var(--mono);
+    font-size: 0.72rem;
+    padding: 3px 10px;
+    cursor: pointer;
+    transition: color 0.15s, border-color 0.15s;
+  }
+  .copy-btn:hover { color: var(--text); border-color: var(--border-active); }
+  .output-content {
+    padding: 1.25rem;
+    font-family: var(--mono);
+    font-size: 0.85rem;
+    line-height: 1.8;
+    white-space: pre-wrap;
+    min-height: 120px;
+  }
+  .output-content .section-tag {
+    color: var(--accent);
+    font-weight: 700;
+  }
+  .output-content .beat-tag {
+    color: var(--accent3);
+    font-weight: 700;
+  }
+
+  /* Beat analysis info bar */
+  .beat-info {
+    display: none;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    padding: 0.85rem 1rem;
+    background: rgba(16,185,129,0.08);
+    border-top: 1px solid rgba(16,185,129,0.2);
+  }
+  .beat-stat {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+  .beat-stat-label { font-size: 0.68rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.07em; }
+  .beat-stat-val { font-size: 0.88rem; font-weight: 600; color: var(--accent2); font-family: var(--mono); }
+
+  /* ── Loader ── */
+  .loader {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 1.25rem;
+    color: var(--muted);
+    font-size: 0.85rem;
+  }
+  .spinner {
+    width: 18px; height: 18px;
+    border: 2px solid var(--border);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+    flex-shrink: 0;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* ── Error ── */
+  .error-msg {
+    font-size: 0.82rem;
+    color: var(--danger);
+    min-height: 1.2em;
+    margin-top: 0.4rem;
+  }
+
+  /* ── Section intro ── */
+  .section-intro {
+    display: flex;
+    align-items: flex-start;
+    gap: 1rem;
+    margin-bottom: 1.25rem;
+  }
+  .intro-badge {
+    width: 38px; height: 38px;
+    border-radius: var(--radius-sm);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.2rem;
+    flex-shrink: 0;
+  }
+  .badge-beat { background: rgba(245,158,11,0.18); }
+  .badge-lyrics { background: rgba(139,92,246,0.18); }
+  .badge-upload { background: rgba(16,185,129,0.18); }
+  .intro-text h2 { font-size: 1.05rem; font-weight: 600; margin-bottom: 2px; }
+  .intro-text p { font-size: 0.83rem; color: var(--muted); }
+
+  /* ── Responsive ── */
+  @media (max-width: 600px) {
+    .form-grid, .form-grid.three { grid-template-columns: 1fr; }
+    .tabs { flex-direction: column; }
+    header { padding: 1.25rem 1rem 0; }
+    main { padding: 0 1rem 3rem; }
+    .tab-btn { justify-content: flex-start; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo-row">
+    <div class="logo-icon">🎵</div>
+    <span class="logo-text">AI Music Studio</span>
+  </div>
+  <p class="logo-sub">Afrobeat · Amapiano · Afropop · Gospel — powered by Groq + Llama 3.3</p>
+</header>
+
+<div class="tabs">
+  <button class="tab-btn active" onclick="switchTab('beat')">
+    <span class="tab-icon">🥁</span> Beat Blueprint
+  </button>
+  <button class="tab-btn" onclick="switchTab('lyrics')">
+    <span class="tab-icon">✍️</span> Lyrics Generator
+  </button>
+  <button class="tab-btn" onclick="switchTab('upload')">
+    <span class="tab-icon">🎤</span> Lyrics from Beat
+  </button>
+</div>
+
+<main>
+
+  <!-- ════════════════ BEAT BLUEPRINT ════════════════ -->
+  <section id="beat-section" class="section active">
+    <div class="section-intro">
+      <div class="intro-badge badge-beat">🥁</div>
+      <div class="intro-text">
+        <h2>Beat Blueprint Generator</h2>
+        <p>Describe your sound and get a structured beat blueprint — tempo, layers, arrangement, and production notes.</p>
+      </div>
+    </div>
+
+    <div class="card">
+      <p class="card-title">Beat settings</p>
+      <div class="form-grid three">
+        <div class="form-group">
+          <label for="beat-genre">Genre</label>
+          <select id="beat-genre">
+            <option value="Afrobeat">Afrobeat</option>
+            <option value="Amapiano">Amapiano</option>
+            <option value="Afropop">Afropop</option>
+            <option value="Gospel">Gospel</option>
+            <option value="Highlife">Highlife</option>
+            <option value="Afro-fusion">Afro-fusion</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="beat-mood">Mood</label>
+          <select id="beat-mood">
+            <option value="Energetic">Energetic</option>
+            <option value="Soulful">Soulful</option>
+            <option value="Melancholic">Melancholic</option>
+            <option value="Uplifting">Uplifting</option>
+            <option value="Dark">Dark</option>
+            <option value="Romantic">Romantic</option>
+            <option value="Worshipful">Worshipful</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="beat-tempo">Tempo (BPM)</label>
+          <select id="beat-tempo">
+            <option value="slow (60–80 BPM)">Slow (60–80)</option>
+            <option value="mid-tempo (85–100 BPM)" selected>Mid-tempo (85–100)</option>
+            <option value="fast (105–130 BPM)">Fast (105–130)</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-grid" style="margin-top:1rem;">
+        <div class="form-group full">
+          <label for="beat-notes">Additional notes <span style="color:var(--muted);font-weight:400;">(optional)</span></label>
+          <textarea id="beat-notes" placeholder="e.g. heavy 808 bass, talking drum breaks, bright guitar samples, cathedral reverb…"></textarea>
+        </div>
+      </div>
+      <div class="error-msg" id="beat-error"></div>
+      <button class="gen-btn beat-btn" id="beat-btn" onclick="generateBeat()">▶ Generate Beat Blueprint</button>
+    </div>
+
+    <div class="output-box" id="beat-output">
+      <div class="output-header">
+        <span class="output-label">Blueprint</span>
+        <button class="copy-btn" onclick="copyOutput('beat-result')">Copy</button>
+      </div>
+      <div class="output-content" id="beat-result"></div>
+    </div>
+  </section>
+
+  <!-- ════════════════ LYRICS GENERATOR ════════════════ -->
+  <section id="lyrics-section" class="section">
+    <div class="section-intro">
+      <div class="intro-badge badge-lyrics">✍️</div>
+      <div class="intro-text">
+        <h2>Lyrics Generator</h2>
+        <p>Generate polished, genre-authentic lyrics with your chosen topic, flow, and song structure.</p>
+      </div>
+    </div>
+
+    <div class="card">
+      <p class="card-title">Lyrics settings</p>
+      <div class="form-grid">
+        <div class="form-group full">
+          <label for="lyric-topic">Song topic</label>
+          <input id="lyric-topic" type="text" placeholder="e.g. hustle and grind in Lagos, God's grace, new love, freedom…" />
+        </div>
+        <div class="form-group">
+          <label for="lyrics-genre">Genre</label>
+          <select id="lyrics-genre">
+            <option value="Afrobeat">Afrobeat</option>
+            <option value="Amapiano">Amapiano</option>
+            <option value="Afropop">Afropop</option>
+            <option value="Gospel">Gospel</option>
+            <option value="Highlife">Highlife</option>
+            <option value="Afro-fusion">Afro-fusion</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="lyrics-language">Language mix</label>
+          <select id="lyrics-language">
+            <option value="English">English</option>
+            <option value="Pidgin English">Pidgin English</option>
+            <option value="English and Yoruba">English + Yoruba</option>
+            <option value="English and Igbo">English + Igbo</option>
+            <option value="English and Pidgin">English + Pidgin</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="flow-style">Flow style</label>
+          <select id="flow-style">
+            <option value="melodic">Melodic</option>
+            <option value="conversational">Conversational</option>
+            <option value="rapid / high-energy">Rapid / High-energy</option>
+            <option value="slow and soulful">Slow &amp; Soulful</option>
+            <option value="call-and-response">Call &amp; Response</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="structure">Song structure</label>
+          <select id="structure">
+            <option value="Verse / Chorus / Verse / Chorus / Bridge / Chorus">Standard (V-C-V-C-B-C)</option>
+            <option value="Intro / Verse / Pre-Chorus / Chorus / Verse / Chorus / Outro">Extended</option>
+            <option value="Verse / Chorus / Verse / Chorus">Short (V-C-V-C)</option>
+            <option value="Intro / Verse / Chorus / Bridge / Outro">Compact</option>
+          </select>
+        </div>
+      </div>
+      <div class="error-msg" id="lyrics-error"></div>
+      <button class="gen-btn" id="lyrics-btn" onclick="generateLyrics()">✍️ Generate Lyrics</button>
+    </div>
+
+    <div class="output-box" id="lyrics-output">
+      <div class="output-header">
+        <span class="output-label">Generated lyrics</span>
+        <button class="copy-btn" onclick="copyOutput('lyrics-result')">Copy</button>
+      </div>
+      <div class="output-content" id="lyrics-result"></div>
+    </div>
+  </section>
+
+  <!-- ════════════════ LYRICS FROM BEAT ════════════════ -->
+  <section id="upload-section" class="section">
+    <div class="section-intro">
+      <div class="intro-badge badge-upload">🎤</div>
+      <div class="intro-text">
+        <h2>Lyrics from Your Beat</h2>
+        <p>Upload a beat file — the system analyses its tempo, energy, and feel, then writes lyrics that match the vibe.</p>
+      </div>
+    </div>
+
+    <div class="card">
+      <p class="card-title">Upload beat</p>
+      <div class="upload-zone" id="upload-zone">
+        <input type="file" id="beat-upload" accept="audio/*" onchange="handleFileSelect(this)" />
+        <div class="upload-icon">🎵</div>
+        <p class="upload-label">Drop your beat here or <strong>browse</strong></p>
+        <p class="upload-label" style="font-size:0.75rem;margin-top:4px;">MP3, WAV, FLAC, OGG · max 50 MB</p>
+        <p class="file-name" id="file-name-display"></p>
+      </div>
+    </div>
+
+    <div class="card">
+      <p class="card-title">Lyrics settings</p>
+      <div class="form-grid">
+        <div class="form-group">
+          <label for="upload-genre">Genre</label>
+          <select id="upload-genre">
+            <option value="Afrobeat">Afrobeat</option>
+            <option value="Amapiano">Amapiano</option>
+            <option value="Afropop">Afropop</option>
+            <option value="Gospel">Gospel</option>
+            <option value="Highlife">Highlife</option>
+            <option value="Afro-fusion">Afro-fusion</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="upload-language">Language mix</label>
+          <select id="upload-language">
+            <option value="English">English</option>
+            <option value="Pidgin English">Pidgin English</option>
+            <option value="English and Yoruba">English + Yoruba</option>
+            <option value="English and Igbo">English + Igbo</option>
+            <option value="English and Pidgin">English + Pidgin</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="upload-flow">Flow style</label>
+          <select id="upload-flow">
+            <option value="melodic">Melodic</option>
+            <option value="conversational">Conversational</option>
+            <option value="rapid / high-energy">Rapid / High-energy</option>
+            <option value="slow and soulful">Slow &amp; Soulful</option>
+            <option value="call-and-response">Call &amp; Response</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="upload-structure">Song structure</label>
+          <select id="upload-structure">
+            <option value="Verse / Chorus / Verse / Chorus / Bridge / Chorus">Standard (V-C-V-C-B-C)</option>
+            <option value="Intro / Verse / Pre-Chorus / Chorus / Verse / Chorus / Outro">Extended</option>
+            <option value="Verse / Chorus / Verse / Chorus">Short (V-C-V-C)</option>
+          </select>
+        </div>
+        <div class="form-group full">
+          <label for="upload-notes">Creative direction <span style="color:var(--muted);font-weight:400;">(optional)</span></label>
+          <textarea id="upload-notes" placeholder="e.g. street anthem energy, mention hustle and grind, uplifting chorus…"></textarea>
+        </div>
+      </div>
+      <div class="error-msg" id="upload-error"></div>
+      <button class="gen-btn upload-btn" id="upload-btn" onclick="generateFromBeat()">🎤 Generate Lyrics for This Beat</button>
+    </div>
+
+    <div class="output-box" id="upload-output">
+      <div class="output-header">
+        <span class="output-label">Generated lyrics</span>
+        <button class="copy-btn" onclick="copyOutput('upload-result')">Copy</button>
+      </div>
+      <div class="beat-info" id="beat-info">
+        <div class="beat-stat">
+          <span class="beat-stat-label">Detected BPM</span>
+          <span class="beat-stat-val" id="stat-bpm">—</span>
+        </div>
+        <div class="beat-stat">
+          <span class="beat-stat-label">Key</span>
+          <span class="beat-stat-val" id="stat-key">—</span>
+        </div>
+        <div class="beat-stat">
+          <span class="beat-stat-label">Energy</span>
+          <span class="beat-stat-val" id="stat-energy">—</span>
+        </div>
+        <div class="beat-stat">
+          <span class="beat-stat-label">Duration</span>
+          <span class="beat-stat-val" id="stat-duration">—</span>
+        </div>
+      </div>
+      <div class="output-content" id="upload-result"></div>
+    </div>
+  </section>
+
+</main>
+
+<script>
+  const API = "https://musicai-project.onrender.com/api";
+
+  /* ── Tab switching ── */
+  function switchTab(name) {
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+    document.querySelector(`[onclick="switchTab('${name}')"]`).classList.add('active');
+    document.getElementById(`${name}-section`).classList.add('active');
+  }
+
+  /* ── File select display ── */
+  function handleFileSelect(input) {
+    const display = document.getElementById('file-name-display');
+    display.textContent = input.files.length ? input.files[0].name : '';
+    document.getElementById('upload-error').textContent = '';
+  }
+
+  /* Drag-and-drop visual feedback */
+  const zone = document.getElementById('upload-zone');
+  zone.addEventListener('dragover', e => { e.preventDefault(); zone.classList.add('drag-over'); });
+  zone.addEventListener('dragleave', () => zone.classList.remove('drag-over'));
+  zone.addEventListener('drop', e => {
+    e.preventDefault();
+    zone.classList.remove('drag-over');
+    const dt = e.dataTransfer;
+    if (dt.files.length) {
+      document.getElementById('beat-upload').files = dt.files;
+      handleFileSelect(document.getElementById('beat-upload'));
+    }
+  });
+
+  /* ── Copy output ── */
+  function copyOutput(id) {
+    const el = document.getElementById(id);
+    const text = el.innerText || el.textContent;
+    navigator.clipboard.writeText(text).then(() => {
+      const btn = el.closest('.output-box').querySelector('.copy-btn');
+      btn.textContent = 'Copied!';
+      setTimeout(() => btn.textContent = 'Copy', 1800);
+    });
+  }
+
+  /* ── Shared UI helpers ── */
+  function setLoading(btnId, outputId, resultId, errId, msg) {
+    document.getElementById(errId).textContent = '';
+    document.getElementById(outputId).style.display = 'block';
+    document.getElementById(resultId).innerHTML = `<div class="loader"><div class="spinner"></div>${msg}</div>`;
+    const btn = document.getElementById(btnId);
+    btn.disabled = true;
+    btn._original = btn.textContent;
+    btn.textContent = 'Generating…';
+  }
+
+  function resetBtn(btnId) {
+    const btn = document.getElementById(btnId);
+    btn.disabled = false;
+    btn.textContent = btn._original;
+  }
+
+  function showError(errId, outputId, msg) {
+    document.getElementById(errId).textContent = '⚠️ ' + msg;
+    document.getElementById(outputId).style.display = 'none';
+  }
+
+  /* Format lyrics: highlight [Section] tags */
+  function formatLyrics(raw) {
+    return raw
+      .replace(/\[(Verse|Chorus|Bridge|Pre-Chorus|Outro|Intro)[^\]]*\]/gi,
+        m => `<span class="section-tag">${m}</span>`)
+      .replace(/\n/g, '<br>');
+  }
+
+  /* Format blueprint: highlight [Section] tags in amber */
+  function formatBlueprint(raw) {
+    return raw
+      .replace(/\[[^\]]+\]/g, m => `<span class="beat-tag">${m}</span>`)
+      .replace(/\n/g, '<br>');
+  }
+
+  /* ── 1. Beat Blueprint ── */
+  async function generateBeat() {
+    setLoading('beat-btn', 'beat-output', 'beat-result', 'beat-error', 'Building your beat blueprint…');
+    try {
+      const res = await fetch(`${API}/music/generate`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          genre:  document.getElementById('beat-genre').value,
+          mood:   document.getElementById('beat-mood').value,
+          tempo:  document.getElementById('beat-tempo').value,
+          notes:  document.getElementById('beat-notes').value.trim()
+        })
+      });
+      if (!res.ok) throw new Error(`Server error ${res.status}`);
+      const data = await res.json();
+      if (data.error) throw new Error(data.error);
+      document.getElementById('beat-result').innerHTML = formatBlueprint(data.blueprint ?? data.result ?? JSON.stringify(data));
+    } catch (err) {
+      showError('beat-error', 'beat-output', err.message);
+    } finally {
+      resetBtn('beat-btn');
+    }
+  }
+
+  /* ── 2. Lyrics Generator ── */
+  async function generateLyrics() {
+    setLoading('lyrics-btn', 'lyrics-output', 'lyrics-result', 'lyrics-error', 'Writing lyrics with Groq + Llama 3.3…');
+    try {
+      const res = await fetch(`${API}/lyrics/generate`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          topic:      document.getElementById('lyric-topic').value.trim() || 'success and hustle',
+          genre:      document.getElementById('lyrics-genre').value,
+          language:   document.getElementById('lyrics-language').value,
+          flow_style: document.getElementById('flow-style').value,
+          structure:  document.getElementById('structure').value
+        })
+      });
+      if (!res.ok) throw new Error(`Server error ${res.status}`);
+      const data = await res.json();
+      if (data.error) throw new Error(data.error);
+      document.getElementById('lyrics-result').innerHTML = formatLyrics(data.lyrics ?? data.result ?? JSON.stringify(data));
+    } catch (err) {
+      showError('lyrics-error', 'lyrics-output', err.message);
+    } finally {
+      resetBtn('lyrics-btn');
+    }
+  }
+
+  /* ── 3. Lyrics from Uploaded Beat ── */
+  async function generateFromBeat() {
+    const fileInput = document.getElementById('beat-upload');
+    if (!fileInput.files.length) {
+      document.getElementById('upload-error').textContent = '⚠️ Please select a beat file first.';
+      return;
+    }
+
+    setLoading('upload-btn', 'upload-output', 'upload-result', 'upload-error', 'Analysing your beat with Librosa…');
+    document.getElementById('beat-info').style.display = 'none';
+
+    const formData = new FormData();
+    formData.append('file',      fileInput.files[0]);
+    formData.append('genre',     document.getElementById('upload-genre').value);
+    formData.append('language',  document.getElementById('upload-language').value);
+    formData.append('flow_style',document.getElementById('upload-flow').value);
+    formData.append('structure', document.getElementById('upload-structure').value);
+    formData.append('notes',     document.getElementById('upload-notes').value.trim());
+
+    try {
+      const res = await fetch(`${API}/lyrics/from-beat`, { method: 'POST', body: formData });
+      if (!res.ok) throw new Error(`Server error ${res.status}`);
+      const data = await res.json();
+      if (data.error) throw new Error(data.error);
+
+      /* Show beat analysis stats if backend returns them */
+      const info = document.getElementById('beat-info');
+      if (data.bpm || data.key || data.energy || data.duration) {
+        document.getElementById('stat-bpm').textContent      = data.bpm      ? `${Math.round(data.bpm)} BPM` : '—';
+        document.getElementById('stat-key').textContent      = data.key      ?? '—';
+        document.getElementById('stat-energy').textContent   = data.energy   ? `${(data.energy * 100).toFixed(0)}%` : '—';
+        document.getElementById('stat-duration').textContent = data.duration ? `${Math.round(data.duration)}s` : '—';
+        info.style.display = 'flex';
+      }
+
+      document.getElementById('upload-result').innerHTML = formatLyrics(data.lyrics ?? data.result ?? JSON.stringify(data));
+    } catch (err) {
+      showError('upload-error', 'upload-output', err.message);
+    } finally {
+      resetBtn('upload-btn');
+    }
+  }
+</script>
+</body>
+</html>
